@@ -234,7 +234,7 @@ function InjectSFDView(){
 		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
 		+ '<span class="ogeBoxTitle">'+''+'</span>'
 		+ '</div>'
-		+ '<div id="mySFDBox" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm+'</div>'
+		+ '<div id="mySFDBoxIn" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm+'</div>'
 		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
 		
 	var extEl=document.createElement("div");
@@ -255,6 +255,43 @@ function InjectSFDView(){
 
 	//TODO: WTF is that shit? 
 	//document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function InjectCurrentlyDiapachedFleetsView(){
+	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
+	var fleetsStr=document.getElementById('slots').childNodes[1].childNodes[1].innerHTML.replace(/:/,'');
+	var bfd=JSON.parse(localStorage.ogeBFD);
+	if(bfd.fleets.length==0){if(document.getElementById("ogeBFDBox"))document.getElementById("ogeBFDBox").innerHTML='';return false;};
+	var stripe=true,stripeStr=' rowStripe';
+
+	var tableHTML=document.getElementById("mySFDBoxIn").innerHTML;
+		tableHTML += '<table class="ogeTable" cellspacing="0" cellpadding="0">'
+		+ '<tr class="ogeBFDTableItem ogeTableHeader">'
+		+ '<td class="ogeColFleet">'+fleetsStr+'</td>'
+		+ '<td class="ogeColFT">'+bfd.dict.from+'</td>'
+		+ '<td class="ogeColFT">'+bfd.dict.to+'</td>'
+		+ '<td class="ogeColAction">'+''+'</td>'
+		+ '</tr>';
+	
+	for(var i = 0 ; i < sendingVolley.length ; i++){
+		tableHTML+=''
+		+ '<tr class="ogeBFDTableItem'+(stripe?stripeStr:'')+'">'
+		+ '<td title="'+sendingVolley[i].shipsTips+'" class="ogeColFleet tooltipHTML">'+sendingVolley[i].name+'</td>'
+		+ '<td class="ogeColFT">'+sendingVolley[i].from+'</td>'
+		+ '<td class="ogeColFT">'+sendingVolley[i].to+'</td>'
+		+ '<td class="ogeColAction">'
+			//TODO: binf the right trash
+			+'<a id="mySFDTrash'+i+'"><img style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('ressources/trash.gif')+'"></a>'
+			+'<img id="mySFDSent'+i+'" style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('ressources/loading.gif')+'">'
+		+'</td>'
+		+ '</tr>';
+		
+		stripe=!stripe;
+	};
+	tableHTML+='</table>';
+
+	document.getElementById("mySFDBoxIn").innerHTML = tableHTML;
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function sendVolleyClicked(sender) {
@@ -285,20 +322,25 @@ function sendVolleyClicked(sender) {
 	}
 
 	sendingVolley = JSON.parse(localStorage.ogeBFD).fleets.slice(firstFleetIndex, parseInt(firstFleetIndex, 10) + parseInt(fleetsCount, 10));
+
 	//TODO: create views and link them to sendingVolley elements
+	InjectCurrentlyDiapachedFleetsView();
+	for (var i = 0 ; i < sendingVolley.length ; i++ ) {
+		console.log(document.getElementById('mySFDSent'+i));
+		sendingVolley[i].img=document.getElementById('mySFDSent'+i);
+	}
 
 	sendNextFleetFromVolley();
-	document.getElementById('shouldStandadizeFleets').checked = true;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function sendNextFleetFromVolley() {
-	if (sendingVolley.length > 0) {
+	if (sendingVolley != null && sendingVolley.length > 0) {
 		sendingFleet = sendingVolley[0];
 		sendingVolley.splice(0, 1);
 
 		sendingFleet.step = 1;
 		sendingFleet.selectedPlanet=document.getElementsByName('ogame-planet-id')[0].getAttribute('content');
-		PostXMLHttpRequest(sendingFleet.sendFleetData[0].url,sendingFleet.sendFleetData[0].data,SFD_SendFleet);
+		PostXMLHttpRequest(sendingFleet.sendFleetData[0].url,sendingFleet.sendFleetData[0].data,SendFleet);
 
 		console.log(sendingFleet);	
 		console.log(sendingVolley);
@@ -421,6 +463,8 @@ function SendFleetSuccess(){
 	sendingFleet.img.src=chrome.extension.getURL('ressources/sendFleetGreen.gif');
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});
 	sendingFleet=null;	
+
+	sendNextFleetFromVolley();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendFleetFailed(){
@@ -432,6 +476,8 @@ function SendFleetFailed(){
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});	
 	sendingFleet=null;
 	//Info('SendRecyclersFailed');	
+
+	sendNextFleetFromVolley();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
