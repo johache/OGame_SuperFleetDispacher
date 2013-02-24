@@ -13,6 +13,7 @@ IsModuleLoaded(moduleDomId,true);
 
 if(document.location.href.indexOf('page=fleet1')!=-1){
 	sessionStorage.fleetData='{"fleetForms":[],"dict":{}}';
+	InjectSFDView();
 	InjectBFDView();
 	CatchSubmitOnFleetView(1,'shipsChosen','continue');
 }
@@ -204,6 +205,56 @@ function InjectBFDView(){
 	}
 	
 	document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function InjectSFDView(){
+	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
+	var fleetsStr=document.getElementById('slots').childNodes[1].childNodes[1].innerHTML.replace(/:/,'');
+	var bfd=JSON.parse(localStorage.ogeBFD);
+	if(bfd.fleets.length==0){if(document.getElementById("mySFDBox"))document.getElementById("mySFDBox").innerHTML='';return false;};
+	var stripe=true,stripeStr=' rowStripe';
+
+	var HTMLForm = ""
+		+ '<form>'
+		+ '<input type="radio" name="sendingMode" value="volleyMode">'
+		+ 'Send the <input type="number" name="volleyNumber"> volley of <input type="number" name="fleetsNumberVolleyMode"> fleets <br/>'
+		+ '<input type="radio" name="sendingMode" value="manualMode">'
+		+ 'Send the <input type="number" name"firstFleetNumber"> and the <input type="number" name="fleetsNumberAutoMode"> nexts <br/>'
+		+ '<input type="checkbox" name="shouldStandadizeFleets"> Standardize fleets: <br/>'
+		+ '<input type="number" name="GTNumber"> Great transportors <br/>'
+		+ '<a id="SFDSendButton">Send Fleets</a>' //TODO: bind this link
+		+ '</form>'
+
+	/*var tableHTML='';
+		tableHTML+='<span id="ogeExe" onclick="initIndex()"></span>';*/
+
+	var innerHTML=''
+		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
+		+ '<span class="ogeBoxTitle">'+''+'</span>'
+		+ '</div>'
+		+ '<div id="mySFDBox" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm+'</div>'
+		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
+		
+	var extEl=document.createElement("div");
+		extEl.id="mySFDBox";
+		extEl.setAttribute("class","ogeContentBox");
+		extEl.innerHTML=innerHTML;
+
+	var dest=document.getElementById("mySFDBox");
+	if(!dest){
+		document.getElementById("inhalt").appendChild(extEl);
+	}else{
+		document.getElementById("mySPDBox").innerHTML=extEl.innerHTML;
+	}
+
+	/*for(var i=0;i<bfd.fleets.length;i++){
+		document.getElementById('ogeBFDTrash'+i).onclick=DelFleetClicked;
+		document.getElementById('ogeBFDSend'+i).onclick=SendFleetClicked;
+	}*/
+	
+
+	//TODO: WTF is that shit? 
+	//document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function DelFleetClicked(sender){
