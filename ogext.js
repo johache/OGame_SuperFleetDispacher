@@ -1,8 +1,10 @@
-Info('ITP OGame Basic Fleet Dispatcher Extension [LOADED]');
+Info('ITP OGame Super Fleet Dispatcher Extension [LOADED]');
 
 /// GLOBALS ///
 // dict - loaded from ogextdict.js
+SFD_SENDING_MODES = new Array('VOLLEY_MODE', 'MANUAL_MODE');
 var sendingFleet=null;
+var sendingVolley=null;
 ///////////////
 Storage.prototype.setObject = function(key, value) { this.setItem(key, JSON.stringify(value)); };
 Storage.prototype.getObject = function(key) { return JSON.parse(this.getItem(key)); };
@@ -216,13 +218,13 @@ function InjectSFDView(){
 
 	var HTMLForm = ""
 		+ '<form>'
-		+ '<input type="radio" name="sendingMode" value="volleyMode">'
-		+ 'Send the <input type="number" name="volleyNumber"> volley of <input type="number" name="fleetsNumberVolleyMode"> fleets <br/>'
-		+ '<input type="radio" name="sendingMode" value="manualMode">'
-		+ 'Send the <input type="number" name"firstFleetNumber"> and the <input type="number" name="fleetsNumberAutoMode"> nexts <br/>'
-		+ '<input type="checkbox" name="shouldStandadizeFleets"> Standardize fleets: <br/>'
-		+ '<input type="number" name="GTNumber"> Great transportors <br/>'
-		+ '<a id="SFDSendButton">Send Fleets</a>' //TODO: bind this link
+		+ '<input type="radio" name="sendingMode" value="' + SFD_SENDING_MODES.indexOf('VOLLEY_MODE') + '" checked>'
+		+ 'Send the <input type="number" id="volleyNumber">th volley of <input type="number" id="fleetsCountVolleyMode"> fleets <br/>'
+		+ '<input type="radio" name="sendingMode" value="' + SFD_SENDING_MODES.indexOf('MANUAL_MODE') + '">'
+		+ 'Send the <input type="number" id="firstFleetNumber">th fleet and the <input type="number" id="fleetsCountAutoMode"> nexts <br/>'
+		+ '<input type="checkbox" id="shouldStandadizeFleets"> Standardize fleets: <br/>'
+		+ '<input type="number" id="GTNumber"> Great transportors <br/>'
+		+ '<a id="SFDSendButton" style="cursor:pointer">Send Fleets</a>' //TODO: bind this link
 		+ '</form>'
 
 	/*var tableHTML='';
@@ -247,25 +249,112 @@ function InjectSFDView(){
 		document.getElementById("mySPDBox").innerHTML=extEl.innerHTML;
 	}
 
-	/*for(var i=0;i<bfd.fleets.length;i++){
-		document.getElementById('ogeBFDTrash'+i).onclick=DelFleetClicked;
-		document.getElementById('ogeBFDSend'+i).onclick=SendFleetClicked;
-	}*/
+	// Bind the sendForm button to the correct handler
+	document.getElementById('SFDSendButton').onclick=sendVolleyClicked;
 	
 
 	//TODO: WTF is that shit? 
 	//document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DelFleetClicked(sender){
-if(sendingFleet==null){	
-	var fleetId=sender.srcElement.parentNode.id.replace(/^[^\d]+/,'')*1;
+function sendVolleyClicked(sender) {
+	var radios = document.getElementsByName('sendingMode');
+	var firstFleetIndex;
+	var fleetsCount;
 
-	var bfd=JSON.parse(localStorage.ogeBFD);
-	bfd.fleets.splice(fleetId,1);
-	localStorage.ogeBFD=JSON.stringify(bfd);
-	InjectBFDView(); //refresh view
+	if (radios[SFD_SENDING_MODES.indexOf('VOLLEY_MODE')].checked) {
+		console.log('volley mode');
+
+		fleetsCount = document.getElementById('fleetsCountVolleyMode').value;
+		firstFleetIndex = (document.getElementById('volleyNumber').value - 1) * fleetsCount;
+
+		if (firstFleetIndex < 0 || fleetsCount < 1) {
+			alert('the volley number and the fleets number should be above 0');
+			return;
+		}
+	} else if (radios[SFD_SENDING_MODES.indexOf('MANUAL_MODE')].checked) {
+		console.log('manual mode');
+
+		firstFleetIndex = document.getElementById('firstFleetNumber').value - 1;
+		fleetsCount = document.getElementById('fleetsCountAutoMode').value;
+
+		if ((firstFleetNumber > 0) && (fleetsCount > 0)) {
+			alert('the first fleet index and the fleets number should be above 0');
+			return;
+		}
+	}
+
+	sendingVolley = JSON.parse(localStorage.ogeBFD).fleets.slice(firstFleetIndex, parseInt(firstFleetIndex, 10) + parseInt(fleetsCount, 10));
+	//TODO: create views and link them to sendingVolley elements
+
+	sendNextFleetFromVolley();
+	document.getElementById('shouldStandadizeFleets').checked = true;
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function sendNextFleetFromVolley() {
+	if (sendingVolley.length > 0) {
+		sendingFleet = sendingVolley[0];
+		sendingVolley.splice(0, 1);
+
+		sendingFleet.step = 1;
+		sendingFleet.selectedPlanet=document.getElementsByName('ogame-planet-id')[0].getAttribute('content');
+		PostXMLHttpRequest(sendingFleet.sendFleetData[0].url,sendingFleet.sendFleetData[0].data,SFD_SendFleet);
+
+		console.log(sendingFleet);	
+		console.log(sendingVolley);
+	} else {
+		sendingVolley = null;
+	}
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function SFD_SendFleet(response){
+	var txt=SmartCut(response,'<body id="','"');
+	switch(txt)
+	{
+	case 'fleet1':
+		if(sendingFleet.step==1){
+			sendingFleet.step++;
+			PostXMLHttpRequest(sendingFleet.sendFleetData[1].url,sendingFleet.sendFleetData[1].data,SFD_SendFleet);
+		}else{console.log('failed a fleet sending 1')}
+	break;
+	case 'fleet2':
+		if(sendingFleet.step==2){
+			sendingFleet.step++;
+			PostXMLHttpRequest(sendingFleet.sendFleetData[2].url,sendingFleet.sendFleetData[2].data,SFD_SendFleet);
+		}else{console.log('failed a fleet sending 2')}
+	break;
+	case 'fleet3':
+		if(sendingFleet.step==3){
+			var token='&token='+SmartCut(response,["token'","='"],"'");
+			//Info('Token >',token,'<');
+			
+			sendingFleet.step++;
+			//PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data,SendFleet);
+			// token due OGame version update
+			PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data+token,SFD_SendFleet);
+			
+		}else{console.log('failed a fleet sending 3')}
+	break;
+	case 'movement':
+		if(sendingFleet.step==4){
+			console.log('sent successfully a fleet');
+			sendNextFleetFromVolley();
+		}else{console.log('failed a fleet sending 4');}
+	break;
+	default:
+		console.log('failed a fleet sending default');
+	}
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function DelFleetClicked(sender){
+	if(sendingFleet==null){	
+		var fleetId=sender.srcElement.parentNode.id.replace(/^[^\d]+/,'')*1;
+
+		var bfd=JSON.parse(localStorage.ogeBFD);
+		bfd.fleets.splice(fleetId,1);
+		localStorage.ogeBFD=JSON.stringify(bfd);
+		InjectBFDView(); //refresh view
+	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,7 +433,8 @@ function SendFleetFailed(){
 	sendingFleet=null;
 	//Info('SendRecyclersFailed');	
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function Info(text){
 	var txt="";
@@ -405,7 +495,7 @@ function PostXMLHttpRequest(_url,_data,_callback){
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState==4) {
 			_callback(xmlhttp.responseText);
-		}
+		}//
 	}
 	xmlhttp.open("POST", _url, true);
 	xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
