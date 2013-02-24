@@ -3,8 +3,8 @@ Info('ITP OGame Super Fleet Dispatcher Extension [LOADED]');
 /// GLOBALS ///
 // dict - loaded from ogextdict.js
 SFD_SENDING_MODES = new Array('VOLLEY_MODE', 'MANUAL_MODE');
-var sendingFleet=null;
-var sendingVolley=null;
+var sendingFleet=null; //fleet being currently sent by the extension
+var sendingVolley=null; //list of fleets that the extension should try to send
 ///////////////
 Storage.prototype.setObject = function(key, value) { this.setItem(key, JSON.stringify(value)); };
 Storage.prototype.getObject = function(key) { return JSON.parse(this.getItem(key)); };
@@ -224,17 +224,16 @@ function InjectSFDView(){
 		+ 'Send the <input type="number" id="firstFleetNumber">th fleet and the <input type="number" id="fleetsCountAutoMode"> nexts <br/>'
 		+ '<input type="checkbox" id="shouldStandadizeFleets"> Standardize fleets: <br/>'
 		+ '<input type="number" id="GTNumber"> Great transportors <br/>'
-		+ '<a id="SFDSendButton" style="cursor:pointer">Send Fleets</a>' //TODO: bind this link
+		+ '<a id="SFDSendButton" style="cursor:pointer">Send Fleets</a>'
 		+ '</form>'
-
-	/*var tableHTML='';
-		tableHTML+='<span id="ogeExe" onclick="initIndex()"></span>';*/
 
 	var innerHTML=''
 		+ '<div style="text-align:center;background:url('+chrome.extension.getURL('ressources/newsboxheader.gif')+') no-repeat;height:30px;">'
 		+ '<span class="ogeBoxTitle">'+''+'</span>'
 		+ '</div>'
-		+ '<div id="mySFDBoxIn" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm+'</div>'
+		+ '<div id="mySFDBoxIn" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+HTMLForm
+		+ '<div id="SFDSendingFleets"></div>'
+		+'</div>'
 		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
 		
 	var extEl=document.createElement("div");
@@ -264,8 +263,8 @@ function InjectCurrentlyDiapachedFleetsView(){
 	if(bfd.fleets.length==0){if(document.getElementById("ogeBFDBox"))document.getElementById("ogeBFDBox").innerHTML='';return false;};
 	var stripe=true,stripeStr=' rowStripe';
 
-	var tableHTML=document.getElementById("mySFDBoxIn").innerHTML;
-		tableHTML += '<table class="ogeTable" cellspacing="0" cellpadding="0">'
+	//var tableHTML=document.getElementById("mySFDBoxIn").innerHTML;
+	var tableHTML = '<table class="ogeTable" cellspacing="0" cellpadding="0">'
 		+ '<tr class="ogeBFDTableItem ogeTableHeader">'
 		+ '<td class="ogeColFleet">'+fleetsStr+'</td>'
 		+ '<td class="ogeColFT">'+bfd.dict.from+'</td>'
@@ -290,11 +289,13 @@ function InjectCurrentlyDiapachedFleetsView(){
 	};
 	tableHTML+='</table>';
 
-	document.getElementById("mySFDBoxIn").innerHTML = tableHTML;
-
+	document.getElementById("SFDSendingFleets").innerHTML = tableHTML;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function sendVolleyClicked(sender) {
+
+	//TODO: check for overflow
+
 	var radios = document.getElementsByName('sendingMode');
 	var firstFleetIndex;
 	var fleetsCount;
@@ -320,10 +321,8 @@ function sendVolleyClicked(sender) {
 			return;
 		}
 	}
-
 	sendingVolley = JSON.parse(localStorage.ogeBFD).fleets.slice(firstFleetIndex, parseInt(firstFleetIndex, 10) + parseInt(fleetsCount, 10));
 
-	//TODO: create views and link them to sendingVolley elements
 	InjectCurrentlyDiapachedFleetsView();
 	for (var i = 0 ; i < sendingVolley.length ; i++ ) {
 		console.log(document.getElementById('mySFDSent'+i));
@@ -346,45 +345,6 @@ function sendNextFleetFromVolley() {
 		console.log(sendingVolley);
 	} else {
 		sendingVolley = null;
-	}
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function SFD_SendFleet(response){
-	var txt=SmartCut(response,'<body id="','"');
-	switch(txt)
-	{
-	case 'fleet1':
-		if(sendingFleet.step==1){
-			sendingFleet.step++;
-			PostXMLHttpRequest(sendingFleet.sendFleetData[1].url,sendingFleet.sendFleetData[1].data,SFD_SendFleet);
-		}else{console.log('failed a fleet sending 1')}
-	break;
-	case 'fleet2':
-		if(sendingFleet.step==2){
-			sendingFleet.step++;
-			PostXMLHttpRequest(sendingFleet.sendFleetData[2].url,sendingFleet.sendFleetData[2].data,SFD_SendFleet);
-		}else{console.log('failed a fleet sending 2')}
-	break;
-	case 'fleet3':
-		if(sendingFleet.step==3){
-			var token='&token='+SmartCut(response,["token'","='"],"'");
-			//Info('Token >',token,'<');
-			
-			sendingFleet.step++;
-			//PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data,SendFleet);
-			// token due OGame version update
-			PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data+token,SFD_SendFleet);
-			
-		}else{console.log('failed a fleet sending 3')}
-	break;
-	case 'movement':
-		if(sendingFleet.step==4){
-			console.log('sent successfully a fleet');
-			sendNextFleetFromVolley();
-		}else{console.log('failed a fleet sending 4');}
-	break;
-	default:
-		console.log('failed a fleet sending default');
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
