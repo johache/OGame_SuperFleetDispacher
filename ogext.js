@@ -1,3 +1,13 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/*TODO:
+	add the possibility to remember the last sending configuration
+	make the extension pretty :)
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Info('ITP OGame Super Fleet Dispatcher Extension [LOADED]');
 
 /// GLOBALS ///
@@ -532,7 +542,18 @@ function SendFleetClicked(sender){
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 function SendFleet(response){
-	var txt=SmartCut(response,'<body id="','"');
+	// ------------------------------------------------------------------------------ RESEARCH BEG
+	/*console.log(response);
+	console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
+    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');*/
+    // ------------------------------------------------------------------------------ RESEARCH END
+
+	var txt=SmartCut(response,'<body id="','"');  
 	switch(txt)
 	{
 	case 'fleet1':
@@ -543,12 +564,19 @@ function SendFleet(response){
 	break;
 	case 'fleet2':
 		if(sendingFleet.step==2){
-			sendingFleet.step++;
-			PostXMLHttpRequest(sendingFleet.sendFleetData[2].url,sendingFleet.sendFleetData[2].data,SendFleet);
+				sendingFleet.step++;
+				PostXMLHttpRequest(sendingFleet.sendFleetData[2].url,sendingFleet.sendFleetData[2].data,SendFleet);
 		}else{SendFleetFailed()}
 	break;
 	case 'fleet3':
 		if(sendingFleet.step==3){
+			//HACK: this is looking whether or not the target pseudo is empty. If it is, then the planet doesn't exist.
+			// see HTML code, look for "fleetStatusBar" content.
+			var d = document.createElement('div');
+			d.innerHTML = response.replace('<!DOCTYPE html>', '');
+			if (d.querySelector('div[id="fleetStatusBar"]').childNodes[1].childNodes[5].childNodes.length < 4) { //the planet doesn't exist
+				SendFleetToNonExistingPlanet();
+			} else {
 			var token='&token='+SmartCut(response,["token'","='"],"'");
 			//Info('Token >',token,'<');
 			
@@ -556,6 +584,7 @@ function SendFleet(response){
 			//PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data,SendFleet);
 			// token due OGame version update
 			PostXMLHttpRequest(sendingFleet.sendFleetData[3].url,sendingFleet.sendFleetData[3].data+token,SendFleet);
+		}
 			
 		}else{SendFleetFailed()}
 	break;
@@ -586,6 +615,14 @@ function SendFleetFailed(){
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});	
 	sendingFleet=null;
 	//Info('SendRecyclersFailed');	
+
+	sendNextFleetFromVolley();
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+function SendFleetToNonExistingPlanet(){
+	sendingFleet.img.src=chrome.extension.getURL('ressources/noPlanet.png');
+	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});	
+	sendingFleet=null;
 
 	sendNextFleetFromVolley();
 }
