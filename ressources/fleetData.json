@@ -776,31 +776,6 @@
          "shipsTips":"Attaquer|Grand transporteur <span style='float:right'>6</span><br>"
       },
       {
-         "name":"10-129-13 -- attaque bombardée",
-         "from":"[10:134:12]<br>Home",
-         "to":"<br>[10:129:13] ",
-         "missionName":"Attaquer",
-         "sendFleetData":[
-            {
-               "url":"http://uni106.ogame.fr/game/index.php?page=fleet1&cp=35947319",
-               "data":""
-            },
-            {
-               "url":"http://uni106.ogame.fr/game/index.php?page=fleet2",
-               "data":"galaxy=10&system=129&position=13&type=1&mission=1&speed=10&am204=&am205=&am206=&am207=&am215=&am211=5&am213=&am214=&am202=&am203=8&am208=&am209=&am210="
-            },
-            {
-               "url":"http://uni106.ogame.fr/game/index.php?page=fleet3",
-               "data":"type=1&mission=1&union=0&am203=8&am211=5&galaxy=10&system=129&position=13&speed=10"
-            },
-            {
-               "url":"http://uni106.ogame.fr/game/index.php?page=movement",
-               "data":"retreatAfterDefenderRetreat=1&holdingtime=1&expeditiontime=1&token=a837445b0fde90752d843df686f97d8d&galaxy=10&system=129&position=13&type=1&mission=1&union2=0&holdingOrExpTime=0&speed=10&am203=8&am211=5&metal=0&crystal=0&deuterium=0"
-            }
-         ],
-         "shipsTips":"Attaquer|Grand transporteur <span style='float:right'>8</span><br>Bombardier <span style='float:right'>5</span><br>"
-      },
-      {
          "name":"10-239-10",
          "from":"[10:233:8]<br>Peace",
          "to":"<br>[10:239:10] ",
@@ -1774,6 +1749,180 @@
             }
          ],
          "shipsTips":"Attaquer|Grand transporteur <span style='float:right'>10</span><br>"
+      },
+      {
+         "name":"tmp",
+         "from":"[10:134:12]<br>Home",
+         "to":"<br>[10:233:8] ",
+         "missionName":"Transporter",
+         "sendFleetData":[
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet1&cp=35947319",
+               "data":""
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet2",
+               "data":"galaxy=10
+                        &system=134    départ
+                        &position=12
+
+                        &type=1     1=planete 2=lune ???
+                        &mission=0
+                        &speed=10
+
+                        &am204=1    chasseurs légés
+                        &am205=7    chasseurs lourd
+                        &am206=3    croiseurs
+                        &am207=
+                        &am215=
+                        &am211=26   Bombardier
+                        &am213=1    Destructeur
+                        &am214= 
+                        &am202=1    PT
+                        &am203=89   GT
+                        &am208=
+                        &am209=
+                        &am210=30   Sondes"
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet3",
+               "data":"type=1    1=planete 2=cdd 3=lune
+                        &mission=0
+                        &union=0
+
+                        &am202=1
+                        &am203=89
+                        &am204=1
+                        &am205=7
+                        &am206=3
+                        &am210=30
+                        &am211=26
+                        &am213=1
+
+                        &galaxy=10
+                        &system=233    arrivée
+                        &position=8
+
+                        &speed=1       vitesse effective"
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=movement",
+               "data":"retreatAfterDefenderRetreat=1
+                                       &holdingtime=1
+                                       &expeditiontime=1
+                                       &token=dd7b0ae1deebb2b68e04045b065741de
+
+                                       &galaxy=10
+                                       &system=233    arrivée
+                                       &position=8
+                                       &type=1
+
+                                       &mission=3     attaquer, livrer, stationner...
+                                       &union2=0
+                                       &holdingOrExpTime=0
+
+                                       &speed=1
+
+                                       &am202=1
+                                       &am203=89
+                                       &am204=1
+                                       &am205=7
+                                       &am206=3
+                                       &am210=30
+                                       &am211=26
+                                       &am213=1
+
+                                       &metal=0
+                                       &crystal=0
+                                       &deuterium=0"
+
+
+
+            }
+         ],
+         "shipsTips":"Transporter|Petit transporteur <span style='float:right'>1</span><br>Grand transporteur <span style='float:right'>89</span><br>Chasseur léger <span style='float:right'>1</span><br>Chasseur lourd <span style='float:right'>7</span><br>Croiseur <span style='float:right'>3</span><br>Sonde d`espionnage <span style='float:right'>30</span><br>Bombardier <span style='float:right'>26</span><br>Destructeur <span style='float:right'>1</span><br>"
+      }
+   ],
+   "dict":{
+      "from":"Lieu de départ:",
+      "to":"Lieu d`arrivée:",
+      "sendFleet":"Envoyer la flotte"
+   },
+   {
+         "name":"tmp2",
+         "from":"[10:233:8]<br>Peace",
+         "to":"<br>[10:233:9] ",
+         "missionName":"Recycler le champ de débris",
+         "sendFleetData":[
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet1&cp=35960924",
+               "data":""
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet2",
+               "data":"galaxy=10
+                        &system=233       depart
+                        &position=8
+
+                        &type=1
+                        &mission=0
+                        &speed=10
+
+                        &am204=
+                        &am205=
+                        &am206=
+                        &am207=
+                        &am215=
+                        &am211=
+                        &am213=
+                        &am214=
+                        &am202=
+                        &am203=
+                        &am208=
+                        &am209=1
+                        &am210="
+
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=fleet3",
+               "data":"type=2
+                        &mission=0
+                        &union=0
+
+                        &am209=1
+
+                        &galaxy=10
+                        &system=233
+                        &position=9
+
+                        &speed=3"
+            },
+            {
+               "url":"http://uni106.ogame.fr/game/index.php?page=movement",
+               "data":"retreatAfterDefenderRetreat=1
+                                       &holdingtime=1
+                                       &expeditiontime=1
+                                       &token=6c67dd55b181e07c3f86637852814466
+
+                                       &galaxy=10
+                                       &system=233
+                                       &position=9
+
+                                       &type=2
+                                       &mission=8
+                                       &union2=0
+                                       &holdingOrExpTime=0
+                                       &speed=3
+
+                                       &am209=1
+
+                                       &metal=0
+                                       &crystal=0
+                                       &deuterium=0"
+
+            }
+         ],
+         "shipsTips":"Recycler le champ de débris|Recycleur <span style='float:right'>1</span><br>"
       }
    ],
    "dict":{

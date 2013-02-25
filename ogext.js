@@ -92,6 +92,9 @@ function Fleet3ViewInjection(){
 	document.getElementById("ogeBDFSaveButton").addEventListener('click',function(e){var s=sessionStorage.saveFleet=e.srcElement.getAttribute('bs');var b=document.getElementById('start');if(s==='true'){b.setAttribute('onclick',b.getAttribute('onclicknew'))}else{b.setAttribute('onclick',b.getAttribute('onclickold'));}}, false)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	I don't understand what this does
+*/
 function ParseFleetData(fleet){
 	//Info('ParseFleetData>',fleet.forms);
 	var tip=fleet.missionName+'|',form,data;
@@ -107,25 +110,25 @@ function ParseFleetData(fleet){
 		if(form[i].name!='') data+=form[i].name+'='+form[i].value+'&';
 		
 		if(v==3){ //generate fleetTips
-			
-		fv="<span style='float:right'>"+addCommas(form[i].value)+"</span><br>";
-		if(form[i].name.match(/^am/)){
-			//Info(form[i].name.replace(/^am/,'button'));
-			tip+=document.getElementById(form[i].name.replace(/^am/,'button')).childNodes[1].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerHTML;
-			tip+=fv;
-		}
-		if(form[i].name.match(/^metal/)&&form[i].value!=0){
-			if(!br){br=true;tip+="<br>"};
-			tip+=dict.GetWord('metal')+': '+fv;
-		}
-		if(form[i].name.match(/^crystal/)&&form[i].value!=0){
-			if(!br){br=true;tip+="<br>"};			
-			tip+=dict.GetWord('crystal')+': '+fv;
-		}
-		if(form[i].name.match(/^deuterium/)&&form[i].value!=0){
-			if(!br){br=true;tip+="<br>"};
-			tip+=dict.GetWord('deuterium')+': '+fv;
-		}
+				
+			fv="<span style='float:right'>"+addCommas(form[i].value)+"</span><br>";
+			if(form[i].name.match(/^am/)){
+				//Info(form[i].name.replace(/^am/,'button'));
+				tip+=document.getElementById(form[i].name.replace(/^am/,'button')).childNodes[1].childNodes[1].childNodes[1].childNodes[1].childNodes[0].innerHTML;
+				tip+=fv;
+			}
+			if(form[i].name.match(/^metal/)&&form[i].value!=0){
+				if(!br){br=true;tip+="<br>"};
+				tip+=dict.GetWord('metal')+': '+fv;
+			}
+			if(form[i].name.match(/^crystal/)&&form[i].value!=0){
+				if(!br){br=true;tip+="<br>"};			
+				tip+=dict.GetWord('crystal')+': '+fv;
+			}
+			if(form[i].name.match(/^deuterium/)&&form[i].value!=0){
+				if(!br){br=true;tip+="<br>"};
+				tip+=dict.GetWord('deuterium')+': '+fv;
+			}
 		}//v==3
 	}//inner for
 		data=data.slice(0,-1);
@@ -135,6 +138,63 @@ function ParseFleetData(fleet){
 	}
 	fleet.shipsTips=tip;
 	delete fleet.forms;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	changes fleets data so that they now send aNewComposition
+*/
+function standadizeFleet(aFleet, aNewComposition) {
+	standarizeFleetData(aFleet, 1, aNewComposition, false);
+	standarizeFleetData(aFleet, 2, aNewComposition, true);
+	standarizeFleetData(aFleet, 3, aNewComposition, true);	
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	changes fleets data at index so that they now send aNewComposition (only this index!)
+*/
+function standarizeFleetData(aFleet, aDataIndex, aNewComposition, shouldOmitZeros) {
+	var regExp = /(&am\d{3}=\d*)+/; 
+
+	var url = aFleet.sendFleetData[aDataIndex].data;
+	var cursor = url.search(regExp);
+	while (url.search(regExp) != -1) {
+		cursor = url.search(regExp);
+		url = url.replace(regExp, '');
+	}
+	aFleet.sendFleetData[aDataIndex].data = url.substring(0, cursor) 
+										+ serializeFleetComposition(aNewComposition, shouldOmitZeros) 
+										+ url.substring(cursor);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Makes a string from a fleet composition. This string can be used for XML request to OGame servers
+*/
+function serializeFleetComposition(aFleetComposition, shouldOmitZeros) {
+	if (aFleetComposition == null)
+		return;
+
+	var shipsCodes = new Object();
+	shipsCodes.lightFighters = 204;
+	shipsCodes.heavyFighters = 205;
+	shipsCodes.crusiers = 206;
+	shipsCodes.battleShips = 207;
+	shipsCodes.battleCrusieurs = 215;
+	shipsCodes.bombers = 211;
+	shipsCodes.destroyers = 213;
+	shipsCodes.deathstars = 214;
+	shipsCodes.smallCargos = 202;
+	shipsCodes.largeCargos = 203;
+	shipsCodes.colonyShips = 208;
+	shipsCodes.recyclers = 209;
+	shipsCodes.esponageProbes = 210;
+
+	var s = '';
+	for(var key in shipsCodes){
+		if (aFleetComposition[key] != 0 || !shouldOmitZeros)
+			s += '&am'+shipsCodes[key]+'='+aFleetComposition[key];
+	}
+
+	return s;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function InjectBFDView(){
@@ -209,6 +269,9 @@ function InjectBFDView(){
 	document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Inject the SFD form
+*/
 function InjectSFDView(){
 	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
 	var fleetsStr=document.getElementById('slots').childNodes[1].childNodes[1].innerHTML.replace(/:/,'');
@@ -219,12 +282,75 @@ function InjectSFDView(){
 	var HTMLForm = ""
 		+ '<form>'
 		+ '<input type="radio" name="sendingMode" value="' + SFD_SENDING_MODES.indexOf('VOLLEY_MODE') + '" checked>'
-		+ 'Send the <input type="number" id="volleyNumber">th volley of <input type="number" id="fleetsCountVolleyMode"> fleets <br/>'
+		+ 'Send the <input type="text" id="volleyNumber" value="2">th volley of <input type="text" id="fleetsCountVolleyMode" value="3"> fleets <br/>'
 		+ '<input type="radio" name="sendingMode" value="' + SFD_SENDING_MODES.indexOf('MANUAL_MODE') + '">'
-		+ 'Send the <input type="number" id="firstFleetNumber">th fleet and the <input type="number" id="fleetsCountAutoMode"> nexts <br/>'
-		+ '<input type="checkbox" id="shouldStandadizeFleets"> Standardize fleets: <br/>'
-		+ '<input type="number" id="GTNumber"> Great transportors <br/>'
-		+ '<a id="SFDSendButton" style="cursor:pointer">Send Fleets</a>'
+		+ 'Send the <input type="text" id="firstFleetNumber">th fleet and the <input type="text" id="fleetsCountAutoMode"> nexts <br/>'
+	
+	HTMLForm += '<input type="checkbox" id="shouldStandadizeFleets" checked="true"> Standardize fleets: <br/>'
+		+ '<table style="margin-left:auto; margin-right:auto;">'
+		+ '<td>'
+			+ '<table>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_lightFigtersNumber" value="5"></td>'
+					+ '<td>Light fighters</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_heavyFightersNumber"></td>'
+					+ '<td>Heavy fighters</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_crusiersNumber"></td>'
+					+ '<td>Crusiers</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_battleshipsNumber"></td>'
+					+ '<td>BattleShips</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_battleCrusiersNumber"></td>'
+					+ '<td>Battlecrusieurs</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_bomberNumber"></td>'
+					+ '<td>Bombers</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_destroyersNumber"></td>'
+					+ '<td>Destroyers</td>'
+				+ '</tr>'
+			+ '</table>'
+		+ '</td>'
+		+ '<td>'
+			+ '<table>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_deathStarsNumber"></td>'
+					+ '<td>Deathstars</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_smallCargosNumber"></td>'
+					+ '<td>Small cargos</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_largeCargosNumber" value="2"></td>'
+					+ '<td>Large cargos</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_colonyShipsNumber"></td>'
+					+ '<td>Colony ships</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_recyclersNumber"></td>'
+					+ '<td>Recylcers</td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td><input class="fleetValues" type="text" id="SFD_espionageProbesNumber"></td>'
+					+ '<td>Espionage probes</td>'
+				+ '</tr>'
+			+ '</table>'
+		+ '</td>'
+		+ '</table>';
+
+	HTMLForm += '<a id="SFDSendButton" style="cursor:pointer">Send Fleets</a>'
 		+ '</form>'
 
 	var innerHTML=''
@@ -250,12 +376,11 @@ function InjectSFDView(){
 
 	// Bind the sendForm button to the correct handler
 	document.getElementById('SFDSendButton').onclick=sendVolleyClicked;
-	
-
-	//TODO: WTF is that shit? 
-	//document.getElementById("ogeExe").onclick(); //initCluetip - znajdz nowy init
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	inject an array indicating which fleet are being sent by SFD
+*/
 function InjectCurrentlyDiapachedFleetsView(){
 	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
 	var fleetsStr=document.getElementById('slots').childNodes[1].childNodes[1].innerHTML.replace(/:/,'');
@@ -263,7 +388,6 @@ function InjectCurrentlyDiapachedFleetsView(){
 	if(bfd.fleets.length==0){if(document.getElementById("ogeBFDBox"))document.getElementById("ogeBFDBox").innerHTML='';return false;};
 	var stripe=true,stripeStr=' rowStripe';
 
-	//var tableHTML=document.getElementById("mySFDBoxIn").innerHTML;
 	var tableHTML = '<table class="ogeTable" cellspacing="0" cellpadding="0">'
 		+ '<tr class="ogeBFDTableItem ogeTableHeader">'
 		+ '<td class="ogeColFleet">'+fleetsStr+'</td>'
@@ -272,37 +396,33 @@ function InjectCurrentlyDiapachedFleetsView(){
 		+ '<td class="ogeColAction">'+''+'</td>'
 		+ '</tr>';
 	
-	for(var i = 0 ; i < sendingVolley.length ; i++){
+	for(var i = 0 ; i < sendingVolley.length ; i++) {
 		tableHTML+=''
 		+ '<tr class="ogeBFDTableItem'+(stripe?stripeStr:'')+'">'
 		+ '<td title="'+sendingVolley[i].shipsTips+'" class="ogeColFleet tooltipHTML">'+sendingVolley[i].name+'</td>'
 		+ '<td class="ogeColFT">'+sendingVolley[i].from+'</td>'
 		+ '<td class="ogeColFT">'+sendingVolley[i].to+'</td>'
 		+ '<td class="ogeColAction">'
-			//TODO: binf the right trash
-			+'<a id="mySFDTrash'+i+'"><img style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('ressources/trash.gif')+'"></a>'
+			//TODO: find an ergonomic way to use this trash
+			//+'<a id="mySFDTrash'+i+'"><img style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('ressources/trash.gif')+'"></a>'
 			+'<img id="mySFDSent'+i+'" style="margin-left:10px;cursor:pointer" src="'+chrome.extension.getURL('ressources/loading.gif')+'">'
 		+'</td>'
 		+ '</tr>';
 		
 		stripe=!stripe;
-	};
+	}
 	tableHTML+='</table>';
 
+	// inject HTML 
 	document.getElementById("SFDSendingFleets").innerHTML = tableHTML;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function sendVolleyClicked(sender) {
-
-	//TODO: check for overflow
-
 	var radios = document.getElementsByName('sendingMode');
 	var firstFleetIndex;
 	var fleetsCount;
 
 	if (radios[SFD_SENDING_MODES.indexOf('VOLLEY_MODE')].checked) {
-		console.log('volley mode');
-
 		fleetsCount = document.getElementById('fleetsCountVolleyMode').value;
 		firstFleetIndex = (document.getElementById('volleyNumber').value - 1) * fleetsCount;
 
@@ -311,8 +431,6 @@ function sendVolleyClicked(sender) {
 			return;
 		}
 	} else if (radios[SFD_SENDING_MODES.indexOf('MANUAL_MODE')].checked) {
-		console.log('manual mode');
-
 		firstFleetIndex = document.getElementById('firstFleetNumber').value - 1;
 		fleetsCount = document.getElementById('fleetsCountAutoMode').value;
 
@@ -322,6 +440,35 @@ function sendVolleyClicked(sender) {
 		}
 	}
 	sendingVolley = JSON.parse(localStorage.ogeBFD).fleets.slice(firstFleetIndex, parseInt(firstFleetIndex, 10) + parseInt(fleetsCount, 10));
+
+	if (document.getElementById('shouldStandadizeFleets').checked) {
+		// get the ships the fleets should be standardized to
+		var standardizedFleetComposition = new Object();
+		standardizedFleetComposition.lightFighters = document.getElementById('SFD_lightFigtersNumber').value;
+		standardizedFleetComposition.heavyFighters = document.getElementById('SFD_heavyFightersNumber').value;
+		standardizedFleetComposition.crusiers = document.getElementById('SFD_crusiersNumber').value;
+		standardizedFleetComposition.battleShips = document.getElementById('SFD_battleshipsNumber').value;
+		standardizedFleetComposition.battleCrusieurs = document.getElementById('SFD_battleCrusiersNumber').value;
+		standardizedFleetComposition.bombers = document.getElementById('SFD_bomberNumber').value;
+		standardizedFleetComposition.destroyers = document.getElementById('SFD_destroyersNumber').value;
+		standardizedFleetComposition.deathstars = document.getElementById('SFD_deathStarsNumber').value;
+		standardizedFleetComposition.smallCargos = document.getElementById('SFD_smallCargosNumber').value;
+		standardizedFleetComposition.largeCargos = document.getElementById('SFD_largeCargosNumber').value;
+		standardizedFleetComposition.colonyShips = document.getElementById('SFD_colonyShipsNumber').value;
+		standardizedFleetComposition.recyclers = document.getElementById('SFD_recyclersNumber').value;
+		standardizedFleetComposition.esponageProbes = document.getElementById('SFD_espionageProbesNumber').value;
+
+		//set 0 fo every empty value
+		for(var key in standardizedFleetComposition){
+		    if (standardizedFleetComposition.key == '') 
+		    	standardizedFleetComposition.key = 0;
+		}
+
+		for (var i = 0 ; i < sendingVolley.length ; i++) {
+			standadizeFleet(sendingVolley[i], standardizedFleetComposition);
+		}
+			
+	}
 
 	InjectCurrentlyDiapachedFleetsView();
 	for (var i = 0 ; i < sendingVolley.length ; i++ ) {
@@ -349,7 +496,10 @@ function sendNextFleetFromVolley() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function DelFleetClicked(sender){
+	console.log('enter delete fleet');
 	if(sendingFleet==null){	
+		/*console.log(sender.srcElement.parentNode.id);
+		console.log(sender.srcElement.parentNode.id.replace(/^[^\d]+/,'')*1);*/
 		var fleetId=sender.srcElement.parentNode.id.replace(/^[^\d]+/,'')*1;
 
 		var bfd=JSON.parse(localStorage.ogeBFD);
