@@ -166,7 +166,7 @@ function standarizeFleetData(aFleet, aDataIndex, aNewComposition, shouldOmitZero
 										+ url.substring(cursor);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
+/** 
 	Makes a string from a fleet composition. This string can be used for XML request to OGame servers
 */
 function serializeFleetComposition(aFleetComposition, shouldOmitZeros) {
