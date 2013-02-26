@@ -259,10 +259,10 @@ function InjectBFDView(){
 		+ '<div id="ogeFleetBox" style="padding:10px;background: url('+chrome.extension.getURL('ressources/frame_body.gif')+') repeat-y;">'+tableHTML+'</div>'
 		+ '<div style="background: url('+chrome.extension.getURL('ressources/frame_footer.gif')+') no-repeat;height:30px;"></div>';
 		
-	var extEl=document.createElement("div");
-		extEl.id="ogeBFDBox";
+	var extEl = document.createElement("div");
+		extEl.id = "ogeBFDBox";
 		extEl.setAttribute("class","ogeContentBox");
-		extEl.innerHTML=innerHTML;
+		extEl.innerHTML = innerHTML;
 
 	var dest=document.getElementById("ogeBFDBox");
 	if(!dest){
