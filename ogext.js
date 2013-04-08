@@ -11,18 +11,18 @@
 Info('ITP OGame Super Fleet Dispatcher Extension [LOADED]');
 
 /// GLOBALS ///
-// dict - loaded from ogextdict.js
-SFD_SENDING_MODES = new Array('VOLLEY_MODE', 'MANUAL_MODE');
-var sendingFleet=null; //fleet being currently sent by the extension
-var sendingVolley=null; //list of fleets that the extension should try to send
-///////////////
+SFD_SENDING_MODES = new Array('VOLLEY_MODE', 'MANUAL_MODE');	//constant array
+var sendingFleet=null; 											//fleet being currently sent by the extension
+var sendingVolley=null; 										//list of fleets that the extension should try to send
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Storage.prototype.setObject = function(key, value) { this.setItem(key, JSON.stringify(value)); };
 Storage.prototype.getObject = function(key) { return JSON.parse(this.getItem(key)); };
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var moduleDomId='TEST OGame Basic Fleet Dispatcher Extension';
 IsModuleLoaded(moduleDomId,true);
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 if(document.location.href.indexOf('page=fleet1')!=-1){
 	sessionStorage.fleetData='{"fleetForms":[],"dict":{}}';
 	InjectSFDView();
@@ -48,6 +48,9 @@ if(document.location.href.indexOf('page=movement')!=-1){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Saves the data of a fleet into localStorage
+*/
 function AddFleetData(){
 	var fd=JSON.parse(sessionStorage.fleetData);
 	//Info('sessionStorage.fleetData>',sessionStorage.fleetData);
@@ -60,10 +63,12 @@ function AddFleetData(){
 	bfd.fleets.push({"name":name,"from":fd.fromCoord.replace(/ {1}/,'<br>'),"to":fd.destCoord.replace(/ {1}/,'<br>'),"missionName":fd.missionName,"forms":JSON.stringify(fd.fleetForms)});
 	
 	localStorage.ogeBFD=JSON.stringify(bfd);
-	sessionStorage.saveFleet=false;  //tez zadziala :)
-	//Info('AddFleetData:localStorage.ogeBFD>',localStorage.ogeBFD);
+	sessionStorage.saveFleet=false; 
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	TODO: comment
+*/
 function CatchSubmitOnFleetView(view,formName,buttonId){
 	if(!document.getElementById('buttonz'))return false;
 	var js=''
@@ -94,6 +99,10 @@ function CatchSubmitOnFleetView(view,formName,buttonId){
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Injects HTML into the 3rd view of fleet sending.
+	The injection is save fleet button
+*/
 function Fleet3ViewInjection(){
 	var extDiv=document.createElement("div");
 	extDiv.innerHTML='<a id="ogeBDFSaveButton" class="ogeBDFSaveButton" bs="false" onclick="var b=!(event.srcElement.getAttribute(\'bs\')===\'true\');event.srcElement.setAttribute(\'bs\',b);if(b){this.style.backgroundPosition=\'0px 0px\';event.srcElement.setAttribute(\'BDFName\',prompt(\'Enter fleet name\',event.srcElement.getAttribute(\'BDFName\')));}else{this.style.backgroundPosition=\'0px -38px\'}" style="background:url('+chrome.extension.getURL('ressources/save.gif')+');background-position-y: -38px"></a>';
@@ -103,7 +112,7 @@ function Fleet3ViewInjection(){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
-	I don't understand what this does
+	Parses the data of a fleet beings sent
 */
 function ParseFleetData(fleet){
 	//Info('ParseFleetData>',fleet.forms);
@@ -152,6 +161,9 @@ function ParseFleetData(fleet){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
 	changes fleets data so that they now send aNewComposition
+
+	aFleet: the fleet to be modified
+	aNewComposition: the new composition for the fleet
 */
 function standadizeFleet(aFleet, aNewComposition) {
 	standarizeFleetData(aFleet, 1, aNewComposition, false);
@@ -207,6 +219,9 @@ function serializeFleetComposition(aFleetComposition, shouldOmitZeros) {
 	return s;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Injects the HTML view containing the list of saved fleets
+*/
 function InjectBFDView(){
 	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
 	var fleetsStr=document.getElementById('slots').childNodes[1].childNodes[1].innerHTML.replace(/:/,'');
@@ -280,7 +295,7 @@ function InjectBFDView(){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
-	Inject the SFD form
+	Inject the form to send a volley of fleets
 */
 function InjectSFDView(){
 	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
@@ -389,7 +404,7 @@ function InjectSFDView(){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
-	inject an array indicating which fleet are being sent by SFD
+	Inject an HTML array indicating which fleet are being sent by SFD
 */
 function InjectCurrentlyDiapachedFleetsView(){
 	if(!localStorage.ogeBFD||!document.getElementById('buttonz'))return false;
@@ -427,6 +442,11 @@ function InjectCurrentlyDiapachedFleetsView(){
 	document.getElementById("SFDSendingFleets").innerHTML = tableHTML;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Triggers when the user click on the send button of SFD
+
+	sender: the send button
+*/
 function sendVolleyClicked(sender) {
 	var radios = document.getElementsByName('sendingMode');
 	var firstFleetIndex;
@@ -489,6 +509,10 @@ function sendVolleyClicked(sender) {
 	sendNextFleetFromVolley();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Pops the first fleet of sendingVolley and tries to send it.
+	If there is no fleet to send, sets sendingVolley to null
+*/
 function sendNextFleetFromVolley() {
 	if (sendingVolley != null && sendingVolley.length > 0) {
 		sendingFleet = sendingVolley[0];
@@ -505,6 +529,10 @@ function sendNextFleetFromVolley() {
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Triggered when the user ask to delete a recorded fleet.
+	Removes the fleet to the list of recorded fleets.
+*/
 function DelFleetClicked(sender){
 	console.log('enter delete fleet');
 	if(sendingFleet==null){	
@@ -520,6 +548,9 @@ function DelFleetClicked(sender){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Triggered when the user clicks on a button to send one (and only one) fleet
+*/
 function SendFleetClicked(sender){
 	if(sendingFleet==null){
 		sendingFleet=JSON.parse(localStorage.ogeBFD).fleets[sender.srcElement.parentNode.id.replace(/^[^\d]+/,'')*1];
@@ -541,18 +572,11 @@ function SendFleetClicked(sender){
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Sends the fleet stored on sendingFLeet.
+	This function is also used as a callback function. It contains the different steps of the sending
+*/
 function SendFleet(response){
-	// ------------------------------------------------------------------------------ RESEARCH BEG
-	/*console.log(response);
-	console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');
-    console.log('////////////////////////////////////////////////////////////////////////////////////////////////////////////');*/
-    // ------------------------------------------------------------------------------ RESEARCH END
-
 	var txt=SmartCut(response,'<body id="','"');  
 	switch(txt)
 	{
@@ -598,6 +622,11 @@ function SendFleet(response){
 	}
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Launched when a fleet has successfully been sent.
+	Changes the loading indicator for a succes icon.
+	Also sends the next fleet from the volley if any.
+*/
 function SendFleetSuccess(){
 	sendingFleet.img.src=chrome.extension.getURL('ressources/sendFleetGreen.gif');
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});
@@ -606,12 +635,13 @@ function SendFleetSuccess(){
 	sendNextFleetFromVolley();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Launched when a fleet failed at been sent.
+	Changes the loading indicator for a failure icon.
+	Also sends the next fleet from the volley if any.
+*/
 function SendFleetFailed(){
 	sendingFleet.img.src=chrome.extension.getURL('ressources/sendFleetRed.gif');
-	/*sendingFleet.img.onclick=sendingFleet.imgOnClick;
-	sendingFleet.img.style.cursor=sendingFleet.imgStyleCursor;
-	sendingFleet.img.title=sendingFleet.imgTitle;
-	*/
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});	
 	sendingFleet=null;
 	//Info('SendRecyclersFailed');	
@@ -619,6 +649,11 @@ function SendFleetFailed(){
 	sendNextFleetFromVolley();
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+	Launched when a fleet couldn't be sent because the is no planet at the coordinates.
+	Changes the loading indicator for an "no planet" icon.
+	Also sends the next fleet from the volley if any.
+*/
 function SendFleetToNonExistingPlanet(){
 	sendingFleet.img.src=chrome.extension.getURL('ressources/noPlanet.png');
 	PostXMLHttpRequest(DocumentLocationFullPathname()+"?page=fleet1&cp="+sendingFleet.selectedPlanet,'',function(){});	
